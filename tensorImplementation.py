@@ -79,6 +79,62 @@ class Tensor:
                 [elem for elem in row] * target_shape[1]
                 for row in data
             ]
-            
+     
     
+    def reshape(self, new_shape):
+        size = self._calculate_size(new_shape)
+        if size != len(self.data):
+            raise ValueError("New shape must have the same number of elements as the original tensor.")
+        self.shape = new_shape
+
+    def flatten(self):
+        self.shape = (len(self.data),)
+        self.data = [item for sublist in self.data for item in sublist]
+
+    def transpose(self):
+        self.data = list(map(list, zip(*self.data)))
+        self.shape = tuple(reversed(self.shape))
+
+
+    def resize(self, new_shape):
+        current_size = self._calculate_size(self.shape)
+        new_size = self._calculate_size(new_shape)
+
+        if current_size > new_size:
+            raise ValueError("New size must be greater than or equal to the current size.")
+
+        if current_size < new_size:
+            # Extend the data with zeros to match the new size
+            self.data.extend([0] * (new_size - current_size))
+
+        self.shape = new_shape
+    
+    def __getitem__(self, index):
+        if isinstance(index, tuple):
+            return self._recursive_getitem(index, self.data)
+        elif isinstance(index, int):
+            return self.data[index]
+        else:
+            raise ValueError("Invalid index type.")
+
+    def _recursive_getitem(self, index, data):
+        if len(index) == 1:
+            return data[index[0]]
+        else:
+            return self._recursive_getitem(index[1:], data[index[0]])
+
+    def __setitem__(self, index, value):
+        if isinstance(index, tuple):
+            self._recursive_setitem(index, self.data, value)
+        elif isinstance(index, int):
+            self.data[index] = value
+        else:
+            raise ValueError("Invalid index type.")
+
+    def _recursive_setitem(self, index, data, value):
+        if len(index) == 1:
+            data[index[0]] = value
+        else:
+            self._recursive_setitem(index[1:], data[index[0]], value)
+
     
